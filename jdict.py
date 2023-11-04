@@ -8,6 +8,7 @@ import argparse
 import logging
 import platform
 import sqlite3
+import openai
 from HMTXCLR import clrTx
 from os.path import expanduser
 from pprint import pprint
@@ -22,6 +23,7 @@ global wordDb
 global cursor
 global ScreenI
 global parser
+global gOpenAIKEY
 
 mProun = []
 ARGUDB        = []
@@ -29,6 +31,7 @@ ScreenI = []
 tPage         = 'https://dictionary.goo.ne.jp/srch/all/'
 INSFOLDER = ''
 bWindows = False
+gOpenAIKEY = ''
 
 def strip_tags(html, invalid_tags):
     stripSoup = BeautifulSoup(html)
@@ -100,6 +103,22 @@ def prettyPrint(resultString):
     for line in resultString:
         print(line)
 
+def loadOpenAIKey():
+    global gOpenAIKEY
+    home = expanduser('~')
+    if os.path.isfile(home+args.oaikey) is True:
+            f = codecs.open(home+args.oaikey, encoding='UTF-8', mode='r')
+            if f is not None:
+                for line in f:
+                    if line != '\n' and line[0] != '#':
+                        line = line.rstrip('\n')
+                        gOpenAIKEY=line
+                f.close()
+            else:
+                DB.error('OPEN AI key open fail, load fail')
+    else :
+        print('OPEN AI key doesn\'t existed, load fail')
+
 def loadArgumentDb():
     global wordDb
     global cursor
@@ -162,7 +181,7 @@ def SQLFlush():
     wordDb.commit()
     print("Gone in the wind...")
 
-def SQLDump():
+def SQLDump(mark=0):
     global wordDb
     global cursor
     global ScreenI
@@ -172,7 +191,10 @@ def SQLDump():
     rec_note_b = ""
     rec_note_c = ""
 
-    cursor.execute(f"SELECT * FROM WOI")
+    if mark == 0:
+        cursor.execute(f"SELECT * FROM WOI")
+    elif mark == 1:
+        cursor.execute(f"SELECT * FROM WOI WHERE NOTE_A='M'")
     rows = cursor.fetchall()
     for row in rows:
         ScreenI.append({'word':row[0], 'refcnt':str(row[1]), 'note_a':str(row[2]), 'note_b':str(row[3]), 'note_c':str(row[4])})
@@ -191,14 +213,91 @@ def SQLDump():
             print("=",end='')
         print("=")
 
+def save_last_word(pattern):
+    home = expanduser('~')
+    f = open(home+args.database,'w')
+    if f is not None:
+        f.write(pattern+'\n')
+    f.close()
+
+def mark_last_word_a():
+    global cursor
+    global args
+    home = expanduser('~')
+    if os.path.isfile(home+args.database) is True:
+        f=codecs.open(home+args.database, encoding='UTF-8', mode='r')
+        if f is not None:
+            for line in f:
+                if line != '\n' and line[0] != '#':
+                    line = line.rstrip('\n')
+                    line = line.replace('%20',' ')
+                    cursor.execute(f"SELECT * FROM WOI WHERE WORD=\"{line}\"")
+                    rows = cursor.fetchall()
+                    rosCnt = len(rows)
+                    if rosCnt == 0:
+                        print(f'target word \"{line}\" doesn\'t exist in the database')
+                    else:
+                        cursor.execute(f"UPDATE WOI SET NOTE_A='M' WHERE WORD=\"{line}\"")
+                        wordDb.commit()
+            f.close()
+        else:
+            DB.error('db file open fail')
+    else:
+        print('database doesn\'t existed')
+    SQLDump(1)
+
+def gen_close_test():
+    global gOpenAIKEY
+    global cursor
+
+    loadOpenAIKey()
+    if gOpenAIKEY=='':
+        print('OPEN AI key doesn\'t existed, function abort.')
+        exit(3)
+
+    cursor.execute(f"SELECT * FROM WOI WHERE NOTE_A='M'")
+    rows = cursor.fetchall()
+    words_strings = []
+    for row in rows:
+        words_strings.append(row[0])
+
+    words_string = ','.join(words_strings)
+
+    openai.api_key=gOpenAIKEY
+    openai.Model.list()
+
+    my_query="Could you generate a close test by using "+words_string+"?"
+    
+    print("ASK: "+my_query)
+
+    response = openai.ChatCompletion.create(
+            model="gpt-3.5-turbo",
+            messages=[
+                {"role": "system", "content": "You are a helpful assistant and use Japanese in response."},
+                {"role": "user", "content": my_query}
+            ]
+    )
+
+#    for res in response['choices']:
+#         print(res['message']['content'])
+
+    print(response['choices'][0]['message']['content'])
+
+
 def main():
     global tPage
     global args
     global parser
     if args.statistic:
-        SQLDump()
+        SQLDump(0)
+    elif args.listmark:
+        SQLDump(1)
     elif args.flushdb:
         SQLFlush()
+    elif args.marklastword is True:
+        mark_last_word_a()
+    elif args.doingAI:
+        gen_close_test()
     elif not tPage or len(tPage) == 38:
         parser.print_help()
         exit(1)
@@ -206,6 +305,8 @@ def main():
         resultString = htmlParser(tPage)
         prettyPrint(resultString)
         SQLStuff()
+        pattern = ' '.join(args.query)
+        save_last_word(pattern)
 
 def setup_logging(level):
 	global DB
@@ -224,7 +325,12 @@ def verify():
     parser.add_argument('-d', '--database', dest='database', action = 'store', default='/.jdict/jdict.db')
     parser.add_argument('-q', '--sqlite3', dest='sql3db', action = 'store', default='/.jdict/jdict.db3')
     parser.add_argument('-s', '--statistic', dest='statistic', action = 'store_true', default=False, help='Some statistic')
+    parser.add_argument('-l', '--listmark', dest='listmark', action = 'store_true', default=False, help='list all marked history')
     parser.add_argument('-f', '--flushdatabase', dest='flushdb', action = 'store_true', default=False, help='Flush database') 
+    parser.add_argument('-m', '--marklastword', dest='marklastword', action='store_true', default=False, help='mark last consulted')
+    parser.add_argument('-a', '--ai', dest='doingAI', action = 'store_true', default=False, help='Doing AI base on consulted history')
+    parser.add_argument('-i', '--queryai', dest='queryAI', action = 'store_true', default=False, help='Using AI to do somthing amazing')
+    parser.add_argument('-k', '--openaikey', dest='oaikey', action = 'store', default='/.jdict/.oaikey')
     parser.add_argument('query', nargs='*', default=None)
     args = parser.parse_args()
     if len(args.query) != 0:
