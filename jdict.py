@@ -200,7 +200,7 @@ def SQLDump(mark=0):
         ScreenI.append({'word':row[0], 'refcnt':str(row[1]), 'note_a':str(row[2]), 'note_b':str(row[3]), 'note_c':str(row[4])})
 
     if len(rows) > 0:
-        for x in range(85):
+        for x in range(86):
             print("=",end='')
         print("=")
         print("|"+clrTx("                                          Word","CYAN")+"|"+clrTx("Count","CYAN")+ \
@@ -211,7 +211,7 @@ def SQLDump(mark=0):
             fixDoubleB = item['word'].rjust(shift)
             target_str = f"|{fixDoubleB}|{item['refcnt']:>5}|{item['note_a']:>10}|{item['note_b']:>10}|{item['note_c']:>10}|" 
             print(clrTx(target_str,"WHITE"))
-        for x in range(85):
+        for x in range(86):
             print("=",end='')
         print("=")
 
