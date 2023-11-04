@@ -203,11 +203,13 @@ def SQLDump(mark=0):
         for x in range(85):
             print("=",end='')
         print("=")
-        print("|"+clrTx("                                         Word","CYAN")+"|"+clrTx("Count","CYAN")+ \
+        print("|"+clrTx("                                          Word","CYAN")+"|"+clrTx("Count","CYAN")+ \
         "|"+clrTx("    Note A","CYAN")+"|"+clrTx("    Note B","CYAN")+ \
         "|"+clrTx("    Note C","CYAN")+"|")
         for item in ScreenI:
-            target_str = f"|{item['word']:>45}|{item['refcnt']:>5}|{item['note_a']:>10}|{item['note_b']:>10}|{item['note_c']:>10}|" 
+            shift = 46 - len(item['word'])
+            fixDoubleB = item['word'].rjust(shift)
+            target_str = f"|{fixDoubleB}|{item['refcnt']:>5}|{item['note_a']:>10}|{item['note_b']:>10}|{item['note_c']:>10}|" 
             print(clrTx(target_str,"WHITE"))
         for x in range(85):
             print("=",end='')
