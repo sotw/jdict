@@ -105,7 +105,6 @@ exchange greetings
 
 [意味] 会などで他の人を前に社交的な対応として述べる言葉。また、人と会ったときや別れるときなどに交わす言葉や動作など、自分と相手との間に関係があることを示そうとする言語行動をいう。[英] a ...
 This pattern : "挨拶" has been consulted 1 times!
-
 ```
 
 #### Feature: show consulting history
@@ -155,6 +154,7 @@ Note: this utility will record the fail consulting string, so if you found a res
 This will take a while depending on the response time of OPEN AI. and you probably will get different result every time. 
 
 ```textile
+>jdict -a
 ASK: Could you generate a close test by using 犬,猫,ハムスター,挨拶?
 もちろんです！以下にクローズドテストを作成します：
 
@@ -184,71 +184,4 @@ Gone in the wind...
 
 To do:
 
-More generic ai feature. It's amazing
-
-
-
-## Python3 Japanese Dictionary
-
-#### Introduction
-
-こんにちは！
-
-This simple utility branch out from my big snowball project hmdict. It's a really easy to use Japanese Dictionary web crawler. If you were a linux console user, this might be handy for you.
-
-#### How to install
-
-Need python3 and bs4 (beautifual soup 4)
-
-1. git clone
-
-2. install.sh
-
-I will create a invisible .edict under your home folder
-
-and place bashscript under $home/bin/sh
-
-#### How to use
-
-```bash
-jdict [word]
-```
-
-```bash
-usage: jdict.py [-h] [-v] [-d DATABASE] [-q SQL3DB] [-s] [-f] [query ...]
-
-A Japanese Dictionary Utility
-
-positional arguments:
-  query
-
-options:
-  -h, --help            show this help message and exit
-  -v, --verbose         Verbose mode
-  -d DATABASE, --database DATABASE
-  -q SQL3DB, --sqlite3 SQL3DB
-  -s, --statistic       Some statistic
-  -f, --flushdatabase   Flush databaseme statistic
-```
-
-#### New Feature : auto record how many times you consult a word
-
-```bash
-jdict -s
-======================================================================================
-|                                         Word|Count|    Note A|    Note B|    Note C|
-|                            　　　　　　おはよう|    5|      None|      None|      None|
-|                                     　　　挨拶|    4|      None|      None|      None|
-|                                        　哀愁|    4|      None|      None|      None|
-|                                      孔明の罠|    4|      None|      None|      None|
-|                                      　異世界|    3|      None|      None|      None|
-|                                       おじさん|    2|      None|      None|      None|
-======================================================================================
-```
-
-#### New Feature : delete records
-
-```bash
-jdict -f
-Gone in the wind...
-```
+More generic ai feature. It's amazing.
