@@ -38,6 +38,8 @@ Note: you don't need to have openai key to use basic feature.
 
 #### How to use
 
+check out the using guide video : https://www.youtube.com/watch?v=-sKj1gu60N4
+
 Under console ( recommand wsl/ubuntu )
 
 You can get a help file like the following:
